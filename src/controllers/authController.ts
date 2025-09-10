@@ -163,14 +163,45 @@ export const verifyEmailCode = async (req: Request, res: Response) => {
       });
     }
 
-    // Code is valid - delete it
+    // Code is valid - delete it and mark user as verified
     await prisma.verificationCode.delete({
       where: { email }
     });
 
+    // Find and update user to mark as verified
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        languages: true,
+        interests: true,
+        profileQuestions: true
+      }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Update user as verified
+    await prisma.user.update({
+      where: { email },
+      data: { emailVerified: true }
+    });
+
+    // Generate JWT token
+    const token = generateToken(user.id);
+
+    // Return user data (without password) and token
+    const { password, ...userWithoutPassword } = user;
+
     return res.json({
       success: true,
-      message: 'Email verified successfully'
+      message: 'Email verified successfully',
+      user: userWithoutPassword,
+      token
     });
 
   } catch (error) {
@@ -250,7 +281,7 @@ export const registerUser = async (req: Request, res: Response) => {
         politicalViews: data.politicalViews,
         about: data.about,
         chatStyle: data.chatStyle,
-        emailVerified: true // Since they verified email
+        emailVerified: false // Will be verified after email verification
       }
     });
 
@@ -276,17 +307,13 @@ export const registerUser = async (req: Request, res: Response) => {
       });
     }
 
-    // Generate JWT token
-    const token = generateToken(user.id);
-
-    // Return user data (without password)
+    // Return success without token - user needs to verify email first
     const { password, ...userWithoutPassword } = user;
 
     return res.status(201).json({
       success: true,
-      message: 'User registered successfully',
-      user: userWithoutPassword,
-      token
+      message: 'User registered successfully. Please verify your email to complete registration.',
+      user: userWithoutPassword
     });
 
   } catch (error) {
