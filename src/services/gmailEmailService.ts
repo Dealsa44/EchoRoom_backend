@@ -12,8 +12,8 @@ class GmailEmailService {
   constructor() {
     this.transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
-      port: 587,
-      secure: false, // true for 465, false for other ports
+      port: 465,
+      secure: true, // true for 465, false for other ports
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
@@ -21,6 +21,13 @@ class GmailEmailService {
       tls: {
         rejectUnauthorized: false,
       },
+      // Railway-optimized settings
+      connectionTimeout: 30000,  // 30 seconds
+      greetingTimeout: 10000,    // 10 seconds
+      socketTimeout: 30000,      // 30 seconds
+      pool: true,                // Use connection pooling
+      maxConnections: 1,         // Limit connections
+      maxMessages: 1,            // Limit messages per connection
     });
   }
 
