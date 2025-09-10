@@ -26,6 +26,17 @@ class GmailEmailService {
 
   async sendVerificationEmail(to: string, verificationCode: string): Promise<boolean> {
     try {
+      console.log('🔍 [DEBUG] Starting email send process...');
+      console.log('🔍 [DEBUG] Email config check:', {
+        EMAIL_USER: process.env.EMAIL_USER ? 'SET' : 'MISSING',
+        EMAIL_PASS: process.env.EMAIL_PASS ? 'SET' : 'MISSING',
+        EMAIL_HOST: process.env.EMAIL_HOST || 'smtp.gmail.com',
+        EMAIL_PORT: process.env.EMAIL_PORT || '587'
+      });
+      
+      console.log('🔍 [DEBUG] Attempting to send to:', to);
+      console.log('🔍 [DEBUG] Verification code:', verificationCode);
+      
       const subject = 'EchoRoom - Email Verification Code';
       const html = `
         <!DOCTYPE html>
@@ -150,11 +161,20 @@ class GmailEmailService {
         html,
       };
 
+      console.log('🔍 [DEBUG] Mail options prepared:', { to, subject });
+      console.log('🔍 [DEBUG] Attempting to send mail...');
+
       const info = await this.transporter.sendMail(mailOptions);
       console.log('✅ Verification email sent successfully:', info.messageId);
+      console.log('🔍 [DEBUG] Email response:', info);
       return true;
     } catch (error) {
-      console.error('❌ Failed to send verification email:', error);
+      console.error('❌ [DEBUG] Email send failed with error:', error);
+      console.error('❌ [DEBUG] Error type:', typeof error);
+      console.error('❌ [DEBUG] Error message:', error.message);
+      console.error('❌ [DEBUG] Error code:', error.code);
+      console.error('❌ [DEBUG] Error response:', error.response);
+      console.error('❌ [DEBUG] Full error object:', JSON.stringify(error, null, 2));
       return false;
     }
   }

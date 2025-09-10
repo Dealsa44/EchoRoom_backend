@@ -97,11 +97,14 @@ export const sendVerificationCode = async (req: Request, res: Response) => {
     });
 
     // Send email asynchronously (don't wait for it)
+    console.log('🔍 [DEBUG] About to call gmailService.sendVerificationEmail');
     gmailService.sendVerificationEmail(email, code)
-      .then(() => {
+      .then((success) => {
+        console.log(`✅ [DEBUG] Email send result: ${success}`);
         console.log(`✅ Verification code sent to ${email}`);
       })
       .catch((emailError) => {
+        console.error('❌ [DEBUG] Email sending failed:', emailError);
         console.error('❌ Email sending failed:', emailError);
       });
 
