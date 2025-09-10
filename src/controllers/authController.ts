@@ -96,18 +96,16 @@ export const sendVerificationCode = async (req: Request, res: Response) => {
       create: { email, code, expiresAt }
     });
 
-    // Send email
-    try {
-      await sendVerificationEmail(email, code);
-      console.log(`✅ Verification code sent to ${email}`);
-    } catch (emailError) {
-      console.error('❌ Email sending failed:', emailError);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to send verification email. Please check email configuration.'
+    // Send email asynchronously (don't wait for it)
+    sendVerificationEmail(email, code)
+      .then(() => {
+        console.log(`✅ Verification code sent to ${email}`);
+      })
+      .catch((emailError) => {
+        console.error('❌ Email sending failed:', emailError);
       });
-    }
 
+    // Return immediately - don't wait for email
     return res.json({
       success: true,
       message: 'Verification code sent to your email'
