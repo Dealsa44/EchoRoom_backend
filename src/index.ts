@@ -54,6 +54,38 @@ app.get('/test-email-config', (req, res) => {
   });
 });
 
+// Test email sending endpoint
+app.post('/test-email', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+
+    // Import email service
+    const { sendVerificationEmail } = await import('./services/emailService');
+    
+    // Send test email
+    await sendVerificationEmail(email, '123456');
+    
+    res.json({
+      success: true,
+      message: 'Test email sent successfully'
+    });
+  } catch (error: any) {
+    console.error('Test email error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send test email',
+      error: error.message
+    });
+  }
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);

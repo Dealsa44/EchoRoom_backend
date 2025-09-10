@@ -21,7 +21,10 @@ const createTransporter = () => {
 // Send verification email
 export const sendVerificationEmail = async (email: string, code: string): Promise<void> => {
   try {
+    console.log(`📧 Attempting to send verification email to ${email}`);
+    
     const transporter = createTransporter();
+    console.log(`📧 Transporter created successfully`);
 
     const mailOptions = {
       from: `"EchoRoom" <${process.env.EMAIL_USER}>`,
@@ -52,11 +55,28 @@ export const sendVerificationEmail = async (email: string, code: string): Promis
       `
     };
 
+    console.log(`📧 Sending email with options:`, { from: mailOptions.from, to: mailOptions.to });
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Verification email sent to ${email}`);
-  } catch (error) {
+    console.log(`✅ Verification email sent successfully to ${email}`);
+  } catch (error: any) {
     console.error('❌ Failed to send verification email:', error);
-    throw new Error('Failed to send verification email');
+    console.error('❌ Error details:', {
+      message: error.message,
+      code: error.code,
+      response: error.response,
+      command: error.command
+    });
+    
+    // Provide more specific error messages
+    if (error.code === 'EAUTH') {
+      throw new Error('Gmail authentication failed. Please check your App Password.');
+    } else if (error.code === 'ECONNECTION') {
+      throw new Error('Failed to connect to Gmail SMTP server.');
+    } else if (error.responseCode === 535) {
+      throw new Error('Gmail authentication failed. Invalid App Password.');
+    } else {
+      throw new Error(`Failed to send verification email: ${error.message}`);
+    }
   }
 };
 
