@@ -10,6 +10,9 @@ import authRoutes from './routes/auth';
 import userRoutes from './routes/user';
 import chatRoutes from './routes/chat';
 
+// Import email service
+import GmailEmailService from './services/gmailEmailService';
+
 // Load environment variables
 dotenv.config();
 
@@ -19,6 +22,9 @@ export const prisma = new PrismaClient();
 // Create Express app
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Initialize Gmail service
+const gmailService = new GmailEmailService();
 
 // Middleware
 app.use(helmet());
@@ -39,52 +45,34 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Email configuration test endpoint
-app.get('/test-email-config', (req, res) => {
-  const emailConfig = {
-    EMAIL_USER: process.env.EMAIL_USER ? 'Set' : 'Missing',
-    EMAIL_PASS: process.env.EMAIL_PASS ? 'Set' : 'Missing',
-    EMAIL_HOST: process.env.EMAIL_HOST || 'smtp.gmail.com',
-    EMAIL_PORT: process.env.EMAIL_PORT || '587',
-  };
-  
-  res.json({
-    emailConfig,
-    allRequiredSet: !!(process.env.EMAIL_USER && process.env.EMAIL_PASS)
-  });
-});
 
-// Simple email test endpoint
-app.get('/test-email-simple', async (req, res) => {
+// Gmail service test endpoint
+app.get('/test-gmail-service', async (req, res) => {
   try {
-    console.log('🧪 Testing email service...');
+    console.log('🧪 Testing Gmail service...');
     
-    // Test email configuration
-    const transporter = require('nodemailer').createTransporter({
-      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.EMAIL_PORT || '587'),
-      secure: false,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
-
-    console.log('📧 Transporter created successfully');
+    // Test Gmail connection
+    const isConnected = await gmailService.verifyConnection();
     
-    // Test connection
-    await transporter.verify();
-    console.log('✅ Email service verified successfully');
-    
-    res.json({
-      success: true,
-      message: 'Email service is working correctly'
-    });
+    if (isConnected) {
+      res.json({
+        success: true,
+        message: 'Gmail service is working correctly',
+        emailUser: process.env.EMAIL_USER,
+        emailHost: process.env.EMAIL_HOST || 'smtp.gmail.com',
+        emailPort: process.env.EMAIL_PORT || '587'
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Gmail service connection failed'
+      });
+    }
   } catch (error: any) {
-    console.error('❌ Email test failed:', error);
+    console.error('❌ Gmail service test failed:', error);
     res.status(500).json({
       success: false,
-      message: 'Email service test failed',
+      message: 'Gmail service test failed',
       error: error.message
     });
   }

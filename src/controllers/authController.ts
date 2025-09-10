@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { v4 as uuidv4 } from 'uuid';
 import { PrismaClient } from '@prisma/client';
-import { sendVerificationEmail } from '../services/simpleEmailService';
+import GmailEmailService from '../services/gmailEmailService';
 import { generateVerificationCode, validateEmail } from '../utils/validation';
 
 const prisma = new PrismaClient();
+const gmailService = new GmailEmailService();
 
 // Types
 interface RegisterRequest {
@@ -97,7 +97,7 @@ export const sendVerificationCode = async (req: Request, res: Response) => {
     });
 
     // Send email asynchronously (don't wait for it)
-    sendVerificationEmail(email, code)
+    gmailService.sendVerificationEmail(email, code)
       .then(() => {
         console.log(`✅ Verification code sent to ${email}`);
       })
