@@ -26,9 +26,15 @@ export const getUserProfile = async (req: Request, res: Response) => {
 
     const { password, ...userWithoutPassword } = user;
 
+    // Transform interests from objects to strings for frontend compatibility
+    const transformedUser = {
+      ...userWithoutPassword,
+      interests: userWithoutPassword.interests?.map(interest => interest.interest) || []
+    };
+
     return res.json({
       success: true,
-      user: userWithoutPassword
+      user: transformedUser
     });
 
   } catch (error) {
@@ -66,10 +72,16 @@ export const updateUserProfile = async (req: Request, res: Response) => {
 
     const { password, ...userWithoutPassword } = user;
 
+    // Transform interests from objects to strings for frontend compatibility
+    const transformedUser = {
+      ...userWithoutPassword,
+      interests: userWithoutPassword.interests?.map(interest => interest.interest) || []
+    };
+
     return res.json({
       success: true,
       message: 'Profile updated successfully',
-      user: userWithoutPassword
+      user: transformedUser
     });
 
   } catch (error) {

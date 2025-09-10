@@ -358,10 +358,16 @@ export const loginUser = async (req: Request, res: Response) => {
     // Return user data (without password)
     const { password: _, ...userWithoutPassword } = user;
 
+    // Transform interests from objects to strings for frontend compatibility
+    const transformedUser = {
+      ...userWithoutPassword,
+      interests: userWithoutPassword.interests?.map(interest => interest.interest) || []
+    };
+
     return res.json({
       success: true,
       message: 'Login successful',
-      user: userWithoutPassword,
+      user: transformedUser,
       token
     });
 
@@ -405,9 +411,15 @@ export const getCurrentUser = async (req: Request, res: Response) => {
 
     const { password, ...userWithoutPassword } = user;
 
+    // Transform interests from objects to strings for frontend compatibility
+    const transformedUser = {
+      ...userWithoutPassword,
+      interests: userWithoutPassword.interests?.map(interest => interest.interest) || []
+    };
+
     return res.json({
       success: true,
-      user: userWithoutPassword
+      user: transformedUser
     });
 
   } catch (error) {
