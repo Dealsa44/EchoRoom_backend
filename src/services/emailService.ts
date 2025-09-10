@@ -15,10 +15,13 @@ const createTransporter = () => {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS
     },
-    // Add timeout settings
-    connectionTimeout: 10000, // 10 seconds
-    greetingTimeout: 5000,    // 5 seconds
-    socketTimeout: 10000,     // 10 seconds
+    // Railway-optimized settings
+    connectionTimeout: 5000,  // 5 seconds
+    greetingTimeout: 3000,    // 3 seconds
+    socketTimeout: 5000,      // 5 seconds
+    pool: true,               // Use connection pooling
+    maxConnections: 1,        // Limit connections
+    maxMessages: 1,           // Limit messages per connection
   });
 };
 
