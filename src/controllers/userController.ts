@@ -113,7 +113,7 @@ export const searchUsers = async (req: Request, res: Response) => {
         avatar: true,
         bio: true,
         location: true,
-        age: true,
+        dateOfBirth: true,
         interests: true,
         languages: true,
         createdAt: true
