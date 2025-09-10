@@ -67,6 +67,8 @@ model User {
   languages UserLanguage[]
   interests UserInterest[]
   profileQuestions UserProfileQuestion[]
+  messages ChatMessage[]
+  roomMemberships RoomMember[]
   
   @@map("users")
 }
