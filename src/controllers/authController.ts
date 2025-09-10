@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { PrismaClient } from '@prisma/client';
-import { sendVerificationEmail } from '../services/emailService';
+import { sendVerificationEmail } from '../services/sendgridEmailService';
 import { generateVerificationCode, validateEmail } from '../utils/validation';
 
 const prisma = new PrismaClient();
