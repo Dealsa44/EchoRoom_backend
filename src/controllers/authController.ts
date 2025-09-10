@@ -89,12 +89,16 @@ export const sendVerificationCode = async (req: Request, res: Response) => {
     const code = generateVerificationCode();
     const expiresAt = new Date(Date.now() + parseInt(process.env.VERIFICATION_CODE_EXPIRY || '600000'));
 
+    console.log('📧 Generated verification code:', { email, code, expiresAt });
+
     // Store or update verification code
-    await prisma.verificationCode.upsert({
+    const verificationRecord = await prisma.verificationCode.upsert({
       where: { email },
       update: { code, expiresAt },
       create: { email, code, expiresAt }
     });
+
+    console.log('💾 Stored verification code:', verificationRecord);
 
     // Send email asynchronously (don't wait for it)
     gmailService.sendVerificationEmail(email, code)
@@ -125,6 +129,8 @@ export const verifyEmailCode = async (req: Request, res: Response) => {
   try {
     const { email, code }: VerifyEmailRequest = req.body;
 
+    console.log('🔍 Verifying email code:', { email, code });
+
     if (!email || !code) {
       return res.status(400).json({
         success: false,
@@ -137,7 +143,10 @@ export const verifyEmailCode = async (req: Request, res: Response) => {
       where: { email }
     });
 
+    console.log('📋 Found verification record:', verification);
+
     if (!verification) {
+      console.log('❌ No verification code found for email:', email);
       return res.status(400).json({
         success: false,
         message: 'No verification code found for this email'
@@ -146,6 +155,7 @@ export const verifyEmailCode = async (req: Request, res: Response) => {
 
     // Check if code is expired
     if (verification.expiresAt < new Date()) {
+      console.log('⏰ Verification code expired for email:', email);
       await prisma.verificationCode.delete({
         where: { email }
       });
@@ -156,12 +166,16 @@ export const verifyEmailCode = async (req: Request, res: Response) => {
     }
 
     // Check if code matches
+    console.log('🔐 Comparing codes:', { stored: verification.code, received: code, match: verification.code === code });
     if (verification.code !== code) {
+      console.log('❌ Code mismatch for email:', email);
       return res.status(400).json({
         success: false,
         message: 'Invalid verification code'
       });
     }
+
+    console.log('✅ Code verified successfully for email:', email);
 
     // Code is valid - delete it and mark user as verified
     await prisma.verificationCode.delete({
@@ -179,6 +193,7 @@ export const verifyEmailCode = async (req: Request, res: Response) => {
     });
 
     if (!user) {
+      console.log('❌ User not found for email:', email);
       return res.status(400).json({
         success: false,
         message: 'User not found'
@@ -196,6 +211,8 @@ export const verifyEmailCode = async (req: Request, res: Response) => {
 
     // Return user data (without password) and token
     const { password, ...userWithoutPassword } = user;
+
+    console.log('🎉 Email verification completed successfully for:', email);
 
     return res.json({
       success: true,
