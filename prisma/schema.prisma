@@ -1,0 +1,189 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  avatar    String?
+  bio       String?
+  about     String?
+  
+  // Profile fields
+  dateOfBirth    String?
+  location       String?
+  hometown       String?
+  relationshipStatus String?
+  chatStyle      String?
+  safeMode       String   @default("light")
+  anonymousMode  Boolean  @default(false)
+  aiAssistant    Boolean  @default(false)
+  
+  // Gender and orientation
+  genderIdentity     String?
+  orientation        String?
+  customGender       String?
+  customOrientation  String?
+  ethnicity          String?
+  
+  // Relationship preferences
+  lookingForRelationship Boolean @default(false)
+  lookingForFriendship  Boolean @default(false)
+  relationshipType      String?
+  
+  // Lifestyle
+  smoking      String?
+  drinking     String?
+  hasChildren  String?
+  education    String?
+  occupation   String?
+  religion     String?
+  politicalViews String?
+  
+  // Profile photos
+  photos       String[]
+  
+  // Verification
+  emailVerified    Boolean   @default(false)
+  verificationCode String?
+  codeExpiresAt    DateTime?
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  languages UserLanguage[]
+  interests UserInterest[]
+  profileQuestions UserProfileQuestion[]
+  
+  @@map("users")
+}
+
+model UserLanguage {
+  id          String @id @default(cuid())
+  userId      String
+  code        String
+  name        String
+  proficiency String // beginner, intermediate, advanced, native
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("user_languages")
+}
+
+model UserInterest {
+  id       String @id @default(cuid())
+  userId   String
+  interest String
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("user_interests")
+}
+
+model UserProfileQuestion {
+  id       String @id @default(cuid())
+  userId   String
+  question String
+  answer   String?
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("user_profile_questions")
+}
+
+model VerificationCode {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  @@map("verification_codes")
+}
+
+model ChatRoom {
+  id          String @id @default(cuid())
+  title       String
+  category    String
+  description String
+  isPrivate   Boolean @default(false)
+  icon        String?
+  tags        String[]
+  
+  // Stats
+  memberCount    Int @default(0)
+  activeNow      Int @default(0)
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  messages ChatMessage[]
+  members  RoomMember[]
+  
+  @@map("chat_rooms")
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  roomId    String
+  userId    String
+  content   String
+  type      String   @default("text") // text, image, voice, file
+  imageUrl  String?
+  fileData  Json?
+  voiceData Json?
+  
+  // Translation and correction
+  translated        Boolean @default(false)
+  corrected         Boolean @default(false)
+  originalContent   String?
+  translatedContent String?
+  corrections       Json?
+  
+  // Message status
+  isEdited    Boolean @default(false)
+  isDeleted   Boolean @default(false)
+  replyTo     String?
+  
+  // Reactions
+  reactions Json?
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  room ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("chat_messages")
+}
+
+model RoomMember {
+  id        String   @id @default(cuid())
+  roomId    String
+  userId    String
+  joinedAt  DateTime @default(now())
+  isActive  Boolean  @default(true)
+  
+  // Relations
+  room ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([roomId, userId])
+  @@map("room_members")
+}
