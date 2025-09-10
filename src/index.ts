@@ -54,33 +54,37 @@ app.get('/test-email-config', (req, res) => {
   });
 });
 
-// Test email sending endpoint
-app.post('/test-email', async (req, res) => {
+// Simple email test endpoint
+app.get('/test-email-simple', async (req, res) => {
   try {
-    const { email } = req.body;
+    console.log('🧪 Testing email service...');
     
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is required'
-      });
-    }
+    // Test email configuration
+    const transporter = require('nodemailer').createTransporter({
+      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.EMAIL_PORT || '587'),
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
 
-    // Import email service
-    const { sendVerificationEmail } = await import('./services/emailService');
+    console.log('📧 Transporter created successfully');
     
-    // Send test email
-    await sendVerificationEmail(email, '123456');
+    // Test connection
+    await transporter.verify();
+    console.log('✅ Email service verified successfully');
     
-    return res.json({
+    res.json({
       success: true,
-      message: 'Test email sent successfully'
+      message: 'Email service is working correctly'
     });
   } catch (error: any) {
-    console.error('Test email error:', error);
-    return res.status(500).json({
+    console.error('❌ Email test failed:', error);
+    res.status(500).json({
       success: false,
-      message: 'Failed to send test email',
+      message: 'Email service test failed',
       error: error.message
     });
   }
