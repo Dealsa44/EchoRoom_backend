@@ -97,7 +97,16 @@ export const sendVerificationCode = async (req: Request, res: Response) => {
     });
 
     // Send email
-    await sendVerificationEmail(email, code);
+    try {
+      await sendVerificationEmail(email, code);
+      console.log(`✅ Verification code sent to ${email}`);
+    } catch (emailError) {
+      console.error('❌ Email sending failed:', emailError);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to send verification email. Please check email configuration.'
+      });
+    }
 
     return res.json({
       success: true,

@@ -2,6 +2,11 @@ import nodemailer from 'nodemailer';
 
 // Create transporter for Gmail
 const createTransporter = () => {
+  // Check if required environment variables are set
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    throw new Error('Email configuration missing: EMAIL_USER and EMAIL_PASS must be set');
+  }
+
   return nodemailer.createTransport({
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.EMAIL_PORT || '587'),

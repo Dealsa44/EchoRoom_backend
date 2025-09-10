@@ -39,6 +39,21 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Email configuration test endpoint
+app.get('/test-email-config', (req, res) => {
+  const emailConfig = {
+    EMAIL_USER: process.env.EMAIL_USER ? 'Set' : 'Missing',
+    EMAIL_PASS: process.env.EMAIL_PASS ? 'Set' : 'Missing',
+    EMAIL_HOST: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    EMAIL_PORT: process.env.EMAIL_PORT || '587',
+  };
+  
+  res.json({
+    emailConfig,
+    allRequiredSet: !!(process.env.EMAIL_USER && process.env.EMAIL_PASS)
+  });
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
