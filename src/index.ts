@@ -72,13 +72,13 @@ app.post('/test-email', async (req, res) => {
     // Send test email
     await sendVerificationEmail(email, '123456');
     
-    res.json({
+    return res.json({
       success: true,
       message: 'Test email sent successfully'
     });
   } catch (error: any) {
     console.error('Test email error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to send test email',
       error: error.message
