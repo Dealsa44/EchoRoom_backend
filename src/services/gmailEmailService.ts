@@ -168,7 +168,7 @@ class GmailEmailService {
       console.log('✅ Verification email sent successfully:', info.messageId);
       console.log('🔍 [DEBUG] Email response:', info);
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ [DEBUG] Email send failed with error:', error);
       console.error('❌ [DEBUG] Error type:', typeof error);
       console.error('❌ [DEBUG] Error message:', error.message);
