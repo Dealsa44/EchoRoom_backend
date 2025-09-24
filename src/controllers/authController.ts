@@ -40,6 +40,7 @@ interface RegisterRequest {
   politicalViews?: string;
   about?: string;
   chatStyle?: string;
+  photos?: string[];
 }
 
 interface LoginRequest {
@@ -266,6 +267,7 @@ export const registerUser = async (req: Request, res: Response) => {
         politicalViews: data.politicalViews,
         about: data.about,
         chatStyle: data.chatStyle,
+        photos: data.photos || [],
         emailVerified: true // Email is already verified at this point
       }
     });
