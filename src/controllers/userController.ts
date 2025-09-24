@@ -60,17 +60,98 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     delete updateData.createdAt;
     delete updateData.updatedAt;
 
-    const user = await prisma.user.update({
-      where: { id: userId },
-      data: updateData,
-      include: {
-        languages: true,
-        interests: true,
-        profileQuestions: true
+    // Extract languages and interests for separate handling
+    const { languages, interests, profileQuestions, ...userUpdateData } = updateData;
+
+    // Start a transaction to update user and related data
+    const result = await prisma.$transaction(async (tx) => {
+      // Update main user data
+      const user = await tx.user.update({
+        where: { id: userId },
+        data: userUpdateData,
+        include: {
+          languages: true,
+          interests: true,
+          profileQuestions: true
+        }
+      });
+
+      // Update languages if provided
+      if (languages && Array.isArray(languages)) {
+        // Delete existing languages
+        await tx.userLanguage.deleteMany({
+          where: { userId }
+        });
+
+        // Add new languages
+        if (languages.length > 0) {
+          await tx.userLanguage.createMany({
+            data: languages.map((lang: any) => ({
+              userId,
+              code: lang.language || lang.code,
+              name: lang.name || (lang.language || lang.code),
+              proficiency: lang.level || lang.proficiency
+            }))
+          });
+        }
       }
+
+      // Update interests if provided
+      if (interests && Array.isArray(interests)) {
+        // Delete existing interests
+        await tx.userInterest.deleteMany({
+          where: { userId }
+        });
+
+        // Add new interests
+        if (interests.length > 0) {
+          await tx.userInterest.createMany({
+            data: interests.map((interest: any) => ({
+              userId,
+              interest: typeof interest === 'string' ? interest : interest.interest
+            }))
+          });
+        }
+      }
+
+      // Update profile questions if provided
+      if (profileQuestions && Array.isArray(profileQuestions)) {
+        // Delete existing profile questions
+        await tx.userProfileQuestion.deleteMany({
+          where: { userId }
+        });
+
+        // Add new profile questions
+        if (profileQuestions.length > 0) {
+          await tx.userProfileQuestion.createMany({
+            data: profileQuestions.map((question: any) => ({
+              userId,
+              question: question.question,
+              answer: question.answer
+            }))
+          });
+        }
+      }
+
+      // Fetch updated user with all relations
+      return await tx.user.findUnique({
+        where: { id: userId },
+        include: {
+          languages: true,
+          interests: true,
+          profileQuestions: true
+        }
+      });
     });
 
-    const { password, ...userWithoutPassword } = user;
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const { password, ...userWithoutPassword } = result;
 
     // Transform interests from objects to strings for frontend compatibility
     const transformedUser = {
