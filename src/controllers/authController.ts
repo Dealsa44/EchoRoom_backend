@@ -2,16 +2,11 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
-import GmailEmailService from '../services/gmailEmailService';
 import ResendEmailService from '../services/resendEmailService';
 import { generateVerificationCode, validateEmail } from '../utils/validation';
 
 const prisma = new PrismaClient();
-const gmailService = new GmailEmailService();
-// Use Resend on Render (SMTP blocked); Gmail for local dev
-const emailService = process.env.RESEND_API_KEY
-  ? new ResendEmailService()
-  : gmailService;
+const emailService = new ResendEmailService();
 
 // Types
 interface RegisterRequest {

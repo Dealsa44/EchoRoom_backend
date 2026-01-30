@@ -34,7 +34,7 @@ A Node.js/Express backend API for the EchoRoom social platform.
 - **Database**: PostgreSQL
 - **ORM**: Prisma
 - **Authentication**: JWT + bcrypt
-- **Email**: Nodemailer (Gmail)
+- **Email**: Resend
 - **Validation**: Custom validation utilities
 
 ## Setup Instructions
@@ -54,11 +54,11 @@ cp env.example .env
 
 
 Required environment variables:
-- `DATABASE_URL` - PostgreSQL connection string
+- `DATABASE_URL` - PostgreSQL connection string (Supabase pooler URL with `?pgbouncer=true`)
+- `DIRECT_URL` - Direct PostgreSQL URL (for Prisma migrations)
 - `JWT_SECRET` - Random secret for JWT tokens
-- `EMAIL_USER` - Your Gmail address
-- `EMAIL_PASS` - Gmail app password
-- `FRONTEND_URL` - Your frontend URL
+- `RESEND_API_KEY` - Resend API key ([resend.com/api-keys](https://resend.com/api-keys))
+- `FRONTEND_URL` - Your frontend URL (for CORS)
 
 ### 3. Database Setup
 ```bash
@@ -72,10 +72,10 @@ npm run db:push
 npm run db:studio
 ```
 
-### 4. Gmail Setup
-1. Enable 2-factor authentication on your Gmail account
-2. Generate an "App Password" for this application
-3. Use the app password in `EMAIL_PASS` environment variable
+### 4. Email (Resend)
+1. Sign up at [resend.com](https://resend.com)
+2. Create an API key at [resend.com/api-keys](https://resend.com/api-keys)
+3. Set `RESEND_API_KEY` in your `.env`. Optional: `RESEND_FROM` (default: `EchoRoom <onboarding@resend.dev>`)
 
 ### 5. Run Development Server
 ```bash
@@ -107,10 +107,9 @@ npm run dev
 
 ## Deployment Options
 
-### 1. Railway (Recommended)
-- Easy PostgreSQL setup
-- Automatic deployments
-- Free tier available
+### 1. Render + Supabase
+- Backend on Render; database on Supabase (PostgreSQL)
+- Set `DATABASE_URL`, `DIRECT_URL`, `RESEND_API_KEY`, `JWT_SECRET`, `FRONTEND_URL` in Render environment
 
 ### 2. Vercel
 - Great for serverless functions

@@ -10,9 +10,6 @@ import authRoutes from './routes/auth';
 import userRoutes from './routes/user';
 import chatRoutes from './routes/chat';
 
-// Import email service
-import GmailEmailService from './services/gmailEmailService';
-
 // Load environment variables
 dotenv.config();
 
@@ -22,9 +19,6 @@ export const prisma = new PrismaClient();
 // Create Express app
 const app = express();
 const PORT = process.env.PORT || 5000;
-
-// Initialize Gmail service
-const gmailService = new GmailEmailService();
 
 // Middleware
 app.use(helmet());
@@ -72,39 +66,6 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV 
   });
-});
-
-
-// Gmail service test endpoint
-app.get('/test-gmail-service', async (req, res) => {
-  try {
-    console.log('🧪 Testing Gmail service...');
-    
-    // Test Gmail connection
-    const isConnected = await gmailService.verifyConnection();
-    
-    if (isConnected) {
-      res.json({
-        success: true,
-        message: 'Gmail service is working correctly',
-        emailUser: process.env.EMAIL_USER,
-        emailHost: process.env.EMAIL_HOST || 'smtp.gmail.com',
-        emailPort: process.env.EMAIL_PORT || '587'
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        message: 'Gmail service connection failed'
-      });
-    }
-  } catch (error: any) {
-    console.error('❌ Gmail service test failed:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Gmail service test failed',
-      error: error.message
-    });
-  }
 });
 
 // API Routes
