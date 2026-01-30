@@ -11,8 +11,8 @@ class ResendEmailService {
       throw new Error('RESEND_API_KEY is required when using Resend');
     }
     this.resend = new Resend(apiKey);
-    // Use verified domain or Resend's onboarding address (free tier)
-    this.from = process.env.RESEND_FROM || 'Driftzo <onboarding@resend.dev>';
+    // Use verified domain (e.g. noreply@driftzo.com after verifying at resend.com/domains)
+    this.from = process.env.RESEND_FROM || 'Driftzo <noreply@driftzo.com>';
   }
 
   async sendVerificationEmail(to: string, verificationCode: string): Promise<boolean> {
