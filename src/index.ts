@@ -52,10 +52,10 @@ app.use(express.urlencoded({ extended: true }));
 // Root - so visiting the backend URL shows something friendly
 app.get('/', (req, res) => {
   res.json({
-    name: 'EchoRoom API',
+    name: 'Driftzo API',
     status: 'running',
     health: '/health',
-    docs: 'Use the frontend or call /api/auth, /api/user, /api/chat'
+    docs: 'Use the Driftzo app or call /api/auth, /api/user, /api/chat'
   });
 });
 
@@ -108,7 +108,7 @@ app.use('*', (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 EchoRoom Backend running on port ${PORT}`);
+  console.log(`🚀 Driftzo Backend running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV}`);
   console.log(`🌐 CORS enabled for: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
 });

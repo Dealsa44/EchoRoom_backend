@@ -75,12 +75,12 @@ export function getVerificationEmailHtml(verificationCode: string): string {
     <body>
       <div class="container">
         <div class="header">
-          <div class="logo">EchoRoom</div>
+          <div class="logo">Driftzo</div>
           <h1>Email Verification Required</h1>
         </div>
         
         <p>Hello!</p>
-        <p>Thank you for registering with EchoRoom. To complete your registration and start connecting with amazing people, please verify your email address.</p>
+        <p>Thank you for registering with Driftzo. To complete your registration and start connecting with amazing people, please verify your email address.</p>
         
         <div class="code-container">
           <p><strong>Your verification code is:</strong></p>
@@ -90,26 +90,26 @@ export function getVerificationEmailHtml(verificationCode: string): string {
         <div class="instructions">
           <p><strong>Instructions:</strong></p>
           <ul>
-            <li>Enter this code in the verification field on EchoRoom</li>
+            <li>Enter this code in the verification field on Driftzo</li>
             <li>The code will expire in 10 minutes</li>
             <li>If you didn't request this code, please ignore this email</li>
           </ul>
         </div>
         
         <div class="warning">
-          <p><strong>Security Note:</strong> Never share this code with anyone. EchoRoom will never ask for your verification code via email or phone.</p>
+          <p><strong>Security Note:</strong> Never share this code with anyone. Driftzo will never ask for your verification code via email or phone.</p>
         </div>
         
         <p>Once verified, you'll be able to:</p>
         <ul>
           <li>Create your profile and start chatting</li>
           <li>Connect with people who share your interests</li>
-          <li>Join exciting conversations and make new friends</li>
+          <li>Drift into conversations and make new friends</li>
         </ul>
         
         <div class="footer">
-          <p>This email was sent from EchoRoom. If you have any questions, please contact our support team.</p>
-          <p>&copy; 2024 EchoRoom. All rights reserved.</p>
+          <p>This email was sent from Driftzo. If you have any questions, please contact our support team.</p>
+          <p>&copy; 2024 Driftzo. All rights reserved.</p>
         </div>
       </div>
     </body>

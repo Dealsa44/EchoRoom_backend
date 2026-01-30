@@ -12,7 +12,7 @@ class ResendEmailService {
     }
     this.resend = new Resend(apiKey);
     // Use verified domain or Resend's onboarding address (free tier)
-    this.from = process.env.RESEND_FROM || 'EchoRoom <onboarding@resend.dev>';
+    this.from = process.env.RESEND_FROM || 'Driftzo <onboarding@resend.dev>';
   }
 
   async sendVerificationEmail(to: string, verificationCode: string): Promise<boolean> {
@@ -20,7 +20,7 @@ class ResendEmailService {
       const { data, error } = await this.resend.emails.send({
         from: this.from,
         to: [to],
-        subject: 'EchoRoom - Email Verification Code',
+        subject: 'Driftzo - Email Verification Code',
         html: getVerificationEmailHtml(verificationCode),
       });
 

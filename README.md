@@ -1,6 +1,6 @@
-# EchoRoom Backend
+# Driftzo Backend
 
-A Node.js/Express backend API for the EchoRoom social platform.
+A Node.js/Express backend API for the Driftzo social platform.
 
 ## Features
 
@@ -75,7 +75,7 @@ npm run db:studio
 ### 4. Email (Resend)
 1. Sign up at [resend.com](https://resend.com)
 2. Create an API key at [resend.com/api-keys](https://resend.com/api-keys)
-3. Set `RESEND_API_KEY` in your `.env`. Optional: `RESEND_FROM` (default: `EchoRoom <onboarding@resend.dev>`)
+3. Set `RESEND_API_KEY` in your `.env`. Optional: `RESEND_FROM` (default: `Driftzo <onboarding@resend.dev>`)
 
 ### 5. Run Development Server
 ```bash

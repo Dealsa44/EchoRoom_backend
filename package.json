@@ -1,7 +1,7 @@
 {
   "name": "echoroom-backend",
   "version": "1.0.0",
-  "description": "EchoRoom Backend API",
+  "description": "Driftzo Backend API",
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon src/index.ts",
@@ -14,7 +14,7 @@
     "db:studio": "prisma studio"
   },
   "keywords": [
-    "echoroom",
+    "driftzo",
     "api",
     "backend"
   ],
