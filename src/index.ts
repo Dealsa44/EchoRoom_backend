@@ -55,6 +55,16 @@ app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Root - so visiting the backend URL shows something friendly
+app.get('/', (req, res) => {
+  res.json({
+    name: 'EchoRoom API',
+    status: 'running',
+    health: '/health',
+    docs: 'Use the frontend or call /api/auth, /api/user, /api/chat'
+  });
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
