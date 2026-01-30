@@ -51,6 +51,8 @@ Copy `env.example` to `.env` and fill in your values:
 cp env.example .env
 ```
 
+
+
 Required environment variables:
 - `DATABASE_URL` - PostgreSQL connection string
 - `JWT_SECRET` - Random secret for JWT tokens
