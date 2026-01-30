@@ -3,10 +3,15 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 import GmailEmailService from '../services/gmailEmailService';
+import ResendEmailService from '../services/resendEmailService';
 import { generateVerificationCode, validateEmail } from '../utils/validation';
 
 const prisma = new PrismaClient();
 const gmailService = new GmailEmailService();
+// Use Resend on Render (SMTP blocked); Gmail for local dev
+const emailService = process.env.RESEND_API_KEY
+  ? new ResendEmailService()
+  : gmailService;
 
 // Types
 interface RegisterRequest {
@@ -101,16 +106,15 @@ export const sendVerificationCode = async (req: Request, res: Response) => {
 
     console.log('💾 Stored verification code:', verificationRecord);
 
-    // Send email asynchronously (don't wait for it)
-    gmailService.sendVerificationEmail(email, code)
-      .then((success) => {
-        console.log(`✅ Verification code sent to ${email}`);
-      })
-      .catch((emailError) => {
-        console.error('❌ Email sending failed:', emailError);
+    // Send email and only return success if it was actually sent
+    const sent = await emailService.sendVerificationEmail(email, code);
+    if (!sent) {
+      return res.status(503).json({
+        success: false,
+        message: 'Failed to send verification email. Please try again.'
       });
+    }
 
-    // Return immediately - don't wait for email
     return res.json({
       success: true,
       message: 'Verification code sent to your email'
