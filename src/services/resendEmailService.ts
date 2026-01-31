@@ -1,6 +1,13 @@
 import { Resend } from 'resend';
 import { getVerificationEmailHtml } from '../utils/verificationEmailHtml';
 
+/**
+ * Sender logo in Gmail/Outlook is not set by the email content or Resend API.
+ * To show your logo next to "Driftzo" in the inbox, set up BIMI:
+ * 1. DMARC policy must be p=quarantine or p=reject (see resend.com/docs/dashboard/domains/dmarc)
+ * 2. Add a BIMI DNS record (see resend.com/docs/dashboard/domains/bimi)
+ * 3. Logo: SVG, square, and optionally a Verified Mark Certificate for the checkmark
+ */
 class ResendEmailService {
   private resend: Resend;
   private from: string;

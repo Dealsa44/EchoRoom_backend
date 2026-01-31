@@ -42,8 +42,38 @@ export function getVerificationEmailHtml(verificationCode: string): string {
     }
     .wrapper {
       padding: 40px 20px;
+      width: 100%;
       max-width: 520px;
       margin: 0 auto;
+    }
+    @media (min-width: 600px) {
+      .wrapper {
+        max-width: 600px;
+        padding: 48px 24px;
+      }
+      .card-inner {
+        padding: 48px 44px 44px;
+      }
+      .brand-name { font-size: 32px; }
+      .brand-underline { width: 80px; }
+      h1 { font-size: 24px; }
+      .intro { font-size: 17px; }
+      .code { font-size: 40px; letter-spacing: 10px; }
+      .code-box { padding: 32px 28px; }
+      .steps, .security { padding: 24px 28px; }
+      .footer { padding: 28px 44px 36px; font-size: 14px; }
+    }
+    @media (min-width: 900px) {
+      .wrapper {
+        max-width: 640px;
+        padding: 56px 32px;
+      }
+      .card-inner {
+        padding: 52px 48px 48px;
+      }
+      .brand-name { font-size: 34px; }
+      h1 { font-size: 26px; }
+      .code { font-size: 42px; letter-spacing: 12px; }
     }
     .card {
       background: ${white};
@@ -226,7 +256,7 @@ export function getVerificationEmailHtml(verificationCode: string): string {
         </div>
 
         <div class="security">
-          <p><strong>Security:</strong> Never share this code. Driftzo will never ask for it by email or phone.</p>
+          <p><strong>Security:</strong> Never share this code with anyone. Driftzo will never ask you to send or reply with this code.</p>
         </div>
 
         <div class="benefits">
