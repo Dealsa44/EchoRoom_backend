@@ -1,118 +1,173 @@
 export function getVerificationEmailHtml(verificationCode: string): string {
   return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Email Verification</title>
-      <style>
-        body {
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          line-height: 1.6;
-          color: #333;
-          max-width: 600px;
-          margin: 0 auto;
-          padding: 20px;
-          background-color: #f4f4f4;
-        }
-        .container {
-          background: white;
-          padding: 30px;
-          border-radius: 10px;
-          box-shadow: 0 0 20px rgba(0,0,0,0.1);
-        }
-        .header {
-          text-align: center;
-          margin-bottom: 30px;
-        }
-        .logo {
-          font-size: 28px;
-          font-weight: bold;
-          color: #6366f1;
-          margin-bottom: 10px;
-        }
-        .code-container {
-          background: #f8fafc;
-          border: 2px dashed #6366f1;
-          border-radius: 8px;
-          padding: 20px;
-          text-align: center;
-          margin: 20px 0;
-        }
-        .verification-code {
-          font-size: 32px;
-          font-weight: bold;
-          color: #6366f1;
-          letter-spacing: 4px;
-          font-family: 'Courier New', monospace;
-        }
-        .instructions {
-          background: #fef3c7;
-          border-left: 4px solid #f59e0b;
-          padding: 15px;
-          margin: 20px 0;
-          border-radius: 4px;
-        }
-        .footer {
-          margin-top: 30px;
-          padding-top: 20px;
-          border-top: 1px solid #e5e7eb;
-          text-align: center;
-          color: #6b7280;
-          font-size: 14px;
-        }
-        .warning {
-          background: #fef2f2;
-          border-left: 4px solid #ef4444;
-          padding: 15px;
-          margin: 20px 0;
-          border-radius: 4px;
-          color: #dc2626;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <div class="logo">Driftzo</div>
-          <h1>Email Verification Required</h1>
-        </div>
-        
-        <p>Hello!</p>
-        <p>Thank you for registering with Driftzo. To complete your registration and start connecting with amazing people, please verify your email address.</p>
-        
-        <div class="code-container">
-          <p><strong>Your verification code is:</strong></p>
-          <div class="verification-code">${verificationCode}</div>
-        </div>
-        
-        <div class="instructions">
-          <p><strong>Instructions:</strong></p>
-          <ul>
-            <li>Enter this code in the verification field on Driftzo</li>
-            <li>The code will expire in 10 minutes</li>
-            <li>If you didn't request this code, please ignore this email</li>
-          </ul>
-        </div>
-        
-        <div class="warning">
-          <p><strong>Security Note:</strong> Never share this code with anyone. Driftzo will never ask for your verification code via email or phone.</p>
-        </div>
-        
-        <p>Once verified, you'll be able to:</p>
-        <ul>
-          <li>Create your profile and start chatting</li>
-          <li>Connect with people who share your interests</li>
-          <li>Drift into conversations and make new friends</li>
-        </ul>
-        
-        <div class="footer">
-          <p>This email was sent from Driftzo. If you have any questions, please contact our support team.</p>
-          <p>&copy; 2024 Driftzo. All rights reserved.</p>
-        </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify your email – Driftzo</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      color: #374151;
+      background-color: #f3f4f6;
+    }
+    .wrapper {
+      padding: 32px 16px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 40px 32px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .brand {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .brand-name {
+      font-size: 22px;
+      font-weight: 600;
+      color: #4f46e5;
+      letter-spacing: -0.02em;
+    }
+    .brand-tagline {
+      font-size: 13px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+    h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #111827;
+      margin: 0 0 20px 0;
+      line-height: 1.35;
+    }
+    .intro {
+      color: #4b5563;
+      margin: 0 0 24px 0;
+    }
+    .code-box {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 24px;
+      text-align: center;
+      margin: 28px 0;
+    }
+    .code-label {
+      font-size: 13px;
+      color: #6b7280;
+      margin: 0 0 8px 0;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .code {
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: 6px;
+      color: #111827;
+      font-variant-numeric: tabular-nums;
+    }
+    .steps {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 18px 20px;
+      margin: 24px 0;
+      border-left: 3px solid #818cf8;
+    }
+    .steps-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+      margin: 0 0 10px 0;
+    }
+    .steps ul {
+      margin: 0;
+      padding-left: 18px;
+      color: #4b5563;
+      font-size: 14px;
+    }
+    .steps li { margin-bottom: 4px; }
+    .security {
+      background: #fffbeb;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin: 24px 0;
+      border-left: 3px solid #f59e0b;
+    }
+    .security p {
+      margin: 0;
+      font-size: 13px;
+      color: #92400e;
+      line-height: 1.5;
+    }
+    .benefits {
+      margin: 24px 0;
+      color: #4b5563;
+      font-size: 14px;
+    }
+    .benefits ul {
+      margin: 8px 0 0 0;
+      padding-left: 20px;
+    }
+    .benefits li { margin-bottom: 6px; }
+    .footer {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #e5e7eb;
+      text-align: center;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+    .footer p { margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="card">
+      <div class="brand">
+        <div class="brand-name">Driftzo</div>
+        <div class="brand-tagline">Drift into conversations. Connect for real.</div>
       </div>
-    </body>
-    </html>
-  `;
+
+      <h1>Verify your email</h1>
+      <p class="intro">Thanks for signing up. Enter the code below on Driftzo to finish your registration and start connecting.</p>
+
+      <div class="code-box">
+        <p class="code-label">Your verification code</p>
+        <div class="code">${verificationCode}</div>
+      </div>
+
+      <div class="steps">
+        <p class="steps-title">What to do next</p>
+        <ul>
+          <li>Paste or type this code in the verification field on Driftzo</li>
+          <li>This code expires in 10 minutes</li>
+          <li>If you didn't request it, you can ignore this email</li>
+        </ul>
+      </div>
+
+      <div class="security">
+        <p><strong>Security:</strong> Don't share this code with anyone. Driftzo will never ask for it by email or phone.</p>
+      </div>
+
+      <p class="benefits">After verifying you can create your profile, match with others, and start chatting.</p>
+
+      <div class="footer">
+        <p>Sent by Driftzo. Questions? Contact support.</p>
+        <p>&copy; ${new Date().getFullYear()} Driftzo.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
 }
