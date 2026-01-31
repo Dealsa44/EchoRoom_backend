@@ -26,9 +26,11 @@ app.use(helmet());
 // CORS configuration to allow multiple origins
 const allowedOrigins = [
   process.env.FRONTEND_URL || 'http://localhost:5173',
-  'http://localhost:8081', // Your current development port
-  'http://localhost:5173', // Default Vite port
-  'http://localhost:3000', // Common React port
+  'https://driftzo.com',
+  'https://www.driftzo.com',
+  'http://localhost:8081',
+  'http://localhost:5173',
+  'http://localhost:3000',
 ];
 
 app.use(cors({
