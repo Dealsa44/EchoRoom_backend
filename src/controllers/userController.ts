@@ -1,7 +1,18 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { isCompatible } from '../utils/attractionPreferences';
 
 const prisma = new PrismaClient();
+
+function ageFromDateOfBirth(dateOfBirth: string | null | undefined): number {
+  if (!dateOfBirth) return 0;
+  const birth = new Date(dateOfBirth);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
 
 // Get user profile
 export const getUserProfile = async (req: Request, res: Response) => {
@@ -228,5 +239,159 @@ export const searchUsers = async (req: Request, res: Response) => {
       success: false,
       message: 'Failed to search users'
     });
+  }
+};
+
+// Get discover feed: other users compatible with current user (for Match page)
+export const getDiscoverUsers = async (req: Request, res: Response) => {
+  try {
+    const currentUserId = (req as any).userId;
+
+    const me = await prisma.user.findUnique({
+      where: { id: currentUserId },
+      select: {
+        genderIdentity: true,
+        orientation: true,
+        lookingForRelationship: true,
+        lookingForFriendship: true
+      }
+    });
+    if (!me) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const others = await prisma.user.findMany({
+      where: { id: { not: currentUserId } },
+      include: {
+        languages: true,
+        interests: true
+      }
+    });
+
+    const compatible = others.filter((u) =>
+      isCompatible(
+        me.genderIdentity,
+        me.orientation,
+        me.lookingForRelationship,
+        me.lookingForFriendship,
+        u.genderIdentity,
+        u.orientation,
+        u.lookingForRelationship ?? false,
+        u.lookingForFriendship ?? false
+      )
+    );
+
+    const list = compatible.map((u) => ({
+      id: u.id,
+      name: u.username,
+      avatar: u.avatar ?? '',
+      age: ageFromDateOfBirth(u.dateOfBirth),
+      location: u.location ?? '',
+      hometown: u.hometown ?? undefined,
+      relationshipStatus: u.relationshipStatus ?? undefined,
+      distance: 0,
+      bio: u.bio ?? '',
+      about: u.about ?? '',
+      interests: u.interests?.map((i) => i.interest) ?? [],
+      languages: (u.languages ?? []).map((l) => ({ language: l.code, level: l.proficiency })),
+      languageLevel: 'intermediate',
+      chatStyle: (u.chatStyle as 'introvert' | 'ambievert' | 'extrovert') ?? 'ambievert',
+      lastActive: '',
+      isOnline: false,
+      sharedInterests: 0,
+      genderIdentity: u.genderIdentity ?? '',
+      orientation: u.orientation ?? '',
+      ethnicity: u.ethnicity ?? '',
+      lookingForRelationship: u.lookingForRelationship ?? false,
+      lookingForFriendship: u.lookingForFriendship ?? false,
+      relationshipType: u.relationshipType ?? undefined,
+      smoking: (u.smoking as any) ?? 'prefer-not-to-say',
+      drinking: (u.drinking as any) ?? 'prefer-not-to-say',
+      hasChildren: (u.hasChildren as any) ?? 'prefer-not-to-say',
+      education: (u.education as any) ?? 'prefer-not-to-say',
+      occupation: u.occupation ?? '',
+      religion: (u.religion as any) ?? 'prefer-not-to-say',
+      politicalViews: (u.politicalViews as any) ?? 'prefer-not-to-say',
+      photos: Array.isArray(u.photos) ? u.photos : (u.photos ? [u.photos] : []),
+      isVerified: !!u.emailVerified,
+      profileCompletion: 80,
+      iceBreakerAnswers: {} as Record<string, string>,
+      profileQuestions: []
+    }));
+
+    return res.json({ success: true, users: list });
+  } catch (error) {
+    console.error('Discover users error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to load discover feed' });
+  }
+};
+
+// Get public profile by id (for viewing another user's profile)
+export const getPublicProfile = async (req: Request, res: Response) => {
+  try {
+    const currentUserId = (req as any).userId;
+    const { id: targetId } = req.params;
+    if (!targetId) {
+      return res.status(400).json({ success: false, message: 'User id required' });
+    }
+    if (targetId === currentUserId) {
+      return res.status(400).json({ success: false, message: 'Use your own profile endpoint' });
+    }
+
+    const u = await prisma.user.findUnique({
+      where: { id: targetId },
+      include: { languages: true, interests: true, profileQuestions: true }
+    });
+    if (!u) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const profile = {
+      id: u.id,
+      name: u.username,
+      avatar: u.avatar ?? '',
+      age: ageFromDateOfBirth(u.dateOfBirth),
+      location: u.location ?? '',
+      hometown: u.hometown ?? undefined,
+      relationshipStatus: u.relationshipStatus ?? undefined,
+      distance: 0,
+      bio: u.bio ?? '',
+      about: u.about ?? '',
+      interests: u.interests?.map((i) => i.interest) ?? [],
+      languages: (u.languages ?? []).map((l) => ({ language: l.code, level: l.proficiency })),
+      languageLevel: 'intermediate',
+      chatStyle: (u.chatStyle as 'introvert' | 'ambievert' | 'extrovert') ?? 'ambievert',
+      lastActive: '',
+      isOnline: false,
+      sharedInterests: 0,
+      genderIdentity: u.genderIdentity ?? '',
+      orientation: u.orientation ?? '',
+      ethnicity: u.ethnicity ?? '',
+      lookingForRelationship: u.lookingForRelationship ?? false,
+      lookingForFriendship: u.lookingForFriendship ?? false,
+      relationshipType: u.relationshipType ?? undefined,
+      smoking: (u.smoking as any) ?? 'prefer-not-to-say',
+      drinking: (u.drinking as any) ?? 'prefer-not-to-say',
+      hasChildren: (u.hasChildren as any) ?? 'prefer-not-to-say',
+      education: (u.education as any) ?? 'prefer-not-to-say',
+      occupation: u.occupation ?? '',
+      religion: (u.religion as any) ?? 'prefer-not-to-say',
+      politicalViews: (u.politicalViews as any) ?? 'prefer-not-to-say',
+      photos: Array.isArray(u.photos) ? u.photos : (u.photos ? [u.photos] : []),
+      isVerified: !!u.emailVerified,
+      profileCompletion: 80,
+      iceBreakerAnswers: {} as Record<string, string>,
+      profileQuestions: (u.profileQuestions ?? []).map((q) => ({
+        id: q.id,
+        question: q.question,
+        category: 'casual' as const,
+        answer: q.answer ?? undefined
+      }))
+    };
+
+    return res.json({ success: true, profile });
+  } catch (error) {
+    console.error('Get public profile error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to load profile' });
   }
 };

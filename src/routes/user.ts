@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getUserProfile, updateUserProfile, searchUsers } from '../controllers/userController';
+import { getUserProfile, updateUserProfile, searchUsers, getDiscoverUsers, getPublicProfile } from '../controllers/userController';
 import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
@@ -13,5 +13,11 @@ router.put('/profile', updateUserProfile);
 
 // Search routes
 router.get('/search', searchUsers);
+
+// Discover feed for Match page (compatible users only)
+router.get('/discover', getDiscoverUsers);
+
+// Public profile by id (must be after /profile and /search)
+router.get('/:id', getPublicProfile);
 
 export default router;
