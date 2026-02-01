@@ -9,6 +9,7 @@ import { PrismaClient } from '@prisma/client';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/user';
 import chatRoutes from './routes/chat';
+import forumRoutes from './routes/forum';
 
 // Load environment variables
 dotenv.config();
@@ -74,6 +75,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/forum', forumRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
