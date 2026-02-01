@@ -12,6 +12,17 @@ const CATEGORIES: Record<string, string> = {
   'creativity': 'Creativity'
 };
 
+// Get total post count (for community stats)
+export const getPostCount = async (_req: Request, res: Response) => {
+  try {
+    const count = await prisma.forumPost.count();
+    return res.json({ success: true, count });
+  } catch (error) {
+    console.error('Forum getPostCount error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to get count' });
+  }
+};
+
 // List posts: filter by category, search, sort (recent | popular | replies)
 export const listPosts = async (req: Request, res: Response) => {
   try {

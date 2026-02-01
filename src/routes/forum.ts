@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   listPosts,
+  getPostCount,
   createPost,
   getPost,
   reactPost,
@@ -13,6 +14,9 @@ const router = Router();
 
 // List posts (optional auth for future "liked" state on list)
 router.get('/posts', listPosts);
+
+// Get total post count (for community stats)
+router.get('/posts/count', getPostCount);
 
 // Get single post with comments (optional auth for "liked" state)
 router.get('/posts/:id', optionalAuth, getPost);
