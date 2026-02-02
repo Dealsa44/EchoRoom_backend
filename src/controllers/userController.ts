@@ -243,9 +243,11 @@ export const searchUsers = async (req: Request, res: Response) => {
 };
 
 // Get discover feed: other users compatible with current user (for Match page)
+// Optional query: intent=relationship|friendship|both|all — when set, overrides user profile for this request (so filter works for real users)
 export const getDiscoverUsers = async (req: Request, res: Response) => {
   try {
     const currentUserId = (req as any).userId;
+    const intent = (req.query.intent as string) || '';
 
     const me = await prisma.user.findUnique({
       where: { id: currentUserId },
@@ -260,6 +262,23 @@ export const getDiscoverUsers = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
+    // Use filter intent when provided, otherwise use saved profile
+    let meWantRelationship: boolean;
+    let meWantFriendship: boolean;
+    if (intent === 'relationship') {
+      meWantRelationship = true;
+      meWantFriendship = false;
+    } else if (intent === 'friendship') {
+      meWantRelationship = false;
+      meWantFriendship = true;
+    } else if (intent === 'both') {
+      meWantRelationship = true;
+      meWantFriendship = true;
+    } else {
+      meWantRelationship = me.lookingForRelationship ?? false;
+      meWantFriendship = me.lookingForFriendship ?? false;
+    }
+
     const others = await prisma.user.findMany({
       where: { id: { not: currentUserId } },
       include: {
@@ -272,8 +291,8 @@ export const getDiscoverUsers = async (req: Request, res: Response) => {
       isCompatible(
         me.genderIdentity,
         me.orientation,
-        me.lookingForRelationship,
-        me.lookingForFriendship,
+        meWantRelationship,
+        meWantFriendship,
         u.genderIdentity,
         u.orientation,
         u.lookingForRelationship ?? false,

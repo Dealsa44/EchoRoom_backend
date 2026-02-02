@@ -74,8 +74,108 @@ model User {
   forumComments ForumComment[]
   forumPostReactions ForumPostReaction[]
   forumCommentReactions ForumCommentReaction[]
+  organizedEvents Event[]
+  eventParticipations EventParticipant[]
+  eventReactions EventReaction[]
+  eventMessages EventMessage[]
   
   @@map("users")
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  organizerId String
+  title       String
+  description String
+  longDescription String?
+  category    String
+  type        String   // in-person, virtual, hybrid
+  location    String
+  address     String?
+  coordinates Json?
+  date        String
+  time        String
+  duration    Int      @default(60) // minutes
+  maxParticipants Int  @default(20)
+  price       Float    @default(0)
+  currency    String   @default("USD")
+  tags        String[]
+  isPrivate   Boolean  @default(false)
+  isFeatured  Boolean  @default(false)
+  image       String?
+  language    String?
+  skillLevel  String?
+  ageRestriction String?
+  dressCode   String?
+  requirements String[]
+  highlights  String[]
+  aboutEvent  String?
+  virtualMeetingLink String?
+  additionalInfo String?
+  agenda      String[]
+  rules       String[]
+  cancellationPolicy String?
+  refundPolicy String?
+  transportation String[]
+  parking     String?
+  accessibility String[]
+  photos      String[]
+  documents   Json?
+  contactEmail String?
+  contactPhone String?
+  website     String?
+  socialMedia Json?    // { facebook?, instagram?, twitter?, linkedin? } or key-value
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organizer   User     @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  participants EventParticipant[]
+  reactions   EventReaction[]
+  messages   EventMessage[]
+
+  @@map("events")
+}
+
+model EventParticipant {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  joinedAt  DateTime @default(now())
+  status    String   @default("confirmed") // confirmed, pending, maybe
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@map("event_participants")
+}
+
+model EventReaction {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  type      String   @default("heart")
+  createdAt DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@map("event_reactions")
+}
+
+model EventMessage {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  content   String
+  type      String   @default("text")
+  createdAt DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("event_messages")
 }
 
 model UserLanguage {

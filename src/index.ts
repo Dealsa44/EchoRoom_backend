@@ -10,6 +10,7 @@ import authRoutes from './routes/auth';
 import userRoutes from './routes/user';
 import chatRoutes from './routes/chat';
 import forumRoutes from './routes/forum';
+import eventRoutes from './routes/event';
 
 // Load environment variables
 dotenv.config();
@@ -76,6 +77,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/forum', forumRoutes);
+app.use('/api/events', eventRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
