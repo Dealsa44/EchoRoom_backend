@@ -90,7 +90,7 @@ export const listEvents = async (req: Request, res: Response) => {
       time: e.time,
       duration: e.duration,
       maxParticipants: e.maxParticipants,
-      currentParticipants: e._count.participants,
+      currentParticipants: e._count.participants + 1, // +1 for organizer
       price: e.price,
       currency: e.currency,
       tags: e.tags,
@@ -158,7 +158,7 @@ export const getMyEvents = async (req: Request, res: Response) => {
         time: e.time,
         duration: e.duration,
         maxParticipants: e.maxParticipants,
-        currentParticipants: e._count?.participants ?? 0,
+        currentParticipants: (e._count?.participants ?? 0) + 1, // +1 for organizer
         price: e.price,
         currency: e.currency,
         tags: e.tags,
@@ -226,7 +226,7 @@ export const getEvent = async (req: Request, res: Response) => {
       time: event.time,
       duration: event.duration,
       maxParticipants: event.maxParticipants,
-      currentParticipants: (event as any)._count?.participants ?? 0,
+      currentParticipants: ((event as any)._count?.participants ?? 0) + 1, // +1 for organizer
       price: event.price,
       currency: event.currency,
       organizer: {
@@ -353,7 +353,7 @@ export const createEvent = async (req: Request, res: Response) => {
       time: event.time,
       duration: event.duration,
       maxParticipants: event.maxParticipants,
-      currentParticipants: 0,
+      currentParticipants: 1, // organizer
       price: event.price,
       currency: event.currency,
       organizer: {
