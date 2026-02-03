@@ -289,7 +289,7 @@ export const setArchived = async (req: Request, res: Response) => {
   }
 };
 
-// Soft delete for current user (hide from list)
+// Soft delete for current user (hide from list). When BOTH users have deleted, hard-delete messages and conversation from DB.
 export const deleteConversation = async (req: Request, res: Response) => {
   try {
     const me = (req as any).userId;
@@ -313,6 +313,17 @@ export const deleteConversation = async (req: Request, res: Response) => {
       create: { userId: me, conversationId, deletedAt: now, clearedAt: now },
       update: { deletedAt: now, clearedAt: now },
     });
+
+    // If both users have deleted, remove messages and conversation from the database
+    const states = await prisma.conversationState.findMany({
+      where: { conversationId },
+      select: { userId: true, deletedAt: true },
+    });
+    const bothDeleted = states.length === 2 && states.every((s) => s.deletedAt != null);
+    if (bothDeleted) {
+      await prisma.directMessage.deleteMany({ where: { conversationId } });
+      await prisma.conversation.delete({ where: { id: conversationId } });
+    }
 
     return res.json({ success: true });
   } catch (error) {
