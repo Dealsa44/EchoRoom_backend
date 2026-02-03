@@ -104,3 +104,12 @@ export function emitMessageReaction(
     );
   }
 }
+
+export function emitThemeChanged(
+  conversationId: string,
+  payload: { themeId: string; themeName: string; systemMessage: { id: string; content: string; createdAt: Date } }
+): void {
+  if (io) {
+    io.to(CONVERSATION_ROOM_PREFIX + conversationId).emit('theme:changed', payload);
+  }
+}

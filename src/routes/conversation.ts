@@ -5,6 +5,7 @@ import {
   getMessages,
   sendMessage,
   setArchived,
+  setConversationTheme,
   deleteConversation,
   reactToMessage,
 } from '../controllers/conversationController';
@@ -18,6 +19,7 @@ router.get('/with/:userId', getOrCreateConversation);
 router.get('/:conversationId/messages', getMessages);
 router.post('/:conversationId/messages', sendMessage);
 router.patch('/:conversationId/archive', setArchived);
+router.patch('/:conversationId/theme', setConversationTheme);
 router.delete('/:conversationId', deleteConversation);
 router.put('/messages/:messageId/react', reactToMessage);
 

@@ -92,9 +92,13 @@ model Conversation {
   id             String   @id @default(cuid())
   user1Id        String
   user2Id        String
-  lastMessageAt  DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  chatTheme           String?  @default("default")  // mood theme id for chat background (messages area)
+  lastMessageAt       DateTime?
+  lastActivityType    String?  // 'message' | 'reaction' | 'theme' – for inbox preview
+  lastActivitySummary  String?  // e.g. message snippet, "Reacted with ❤️", "Theme changed to Aurora"
+  lastActivityUserId   String?  // who did the last action (for "You" vs name)
+  createdAt            DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   user1          User     @relation("User1", fields: [user1Id], references: [id], onDelete: Cascade)
   user2          User     @relation("User2", fields: [user2Id], references: [id], onDelete: Cascade)

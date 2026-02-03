@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { emitNewMessage, emitMessageReaction } from '../socket';
+import { emitNewMessage, emitMessageReaction, emitThemeChanged } from '../socket';
 
 const prisma = new PrismaClient();
+
+const ALLOWED_CHAT_THEMES = ['default', 'aurora', 'ocean', 'sunset', 'forest', 'midnight'] as const;
 
 type ReactionItem = { userId: string; emoji: string };
 
@@ -63,6 +65,9 @@ export const listConversations = async (req: Request, res: Response) => {
             }
           : null,
         lastMessageAt: c.lastMessageAt,
+        lastActivityType: c.lastActivityType ?? null,
+        lastActivitySummary: c.lastActivitySummary ?? null,
+        lastActivityUserId: c.lastActivityUserId ?? null,
         isArchived: s.isArchived,
       };
     })
@@ -142,6 +147,7 @@ export const getOrCreateConversation = async (req: Request, res: Response) => {
       success: true,
       conversation: {
         id: conversation.id,
+        chatTheme: conversation.chatTheme || 'default',
         otherUser: {
           id: other.id,
           name: other.username,
@@ -189,6 +195,8 @@ export const getMessages = async (req: Request, res: Response) => {
       take: limit,
     });
 
+    const chatTheme = conv.chatTheme || 'default';
+
     const items = messages.map((m) => ({
       id: m.id,
       senderId: m.senderId,
@@ -200,7 +208,7 @@ export const getMessages = async (req: Request, res: Response) => {
       createdAt: m.createdAt,
     }));
 
-    return res.json({ success: true, messages: items });
+    return res.json({ success: true, messages: items, chatTheme });
   } catch (error) {
     console.error('Get messages error:', error);
     return res.status(500).json({ success: false, message: 'Failed to get messages' });
@@ -251,9 +259,16 @@ export const sendMessage = async (req: Request, res: Response) => {
       update: { deletedAt: null, clearedAt: null, isArchived: false },
     });
 
+    const summary = content.trim().slice(0, 80);
     await prisma.conversation.update({
       where: { id: conversationId },
-      data: { lastMessageAt: new Date(), updatedAt: new Date() },
+      data: {
+        lastMessageAt: new Date(),
+        lastActivityType: 'message',
+        lastActivitySummary: summary,
+        lastActivityUserId: me,
+        updatedAt: new Date(),
+      },
     });
 
     const messagePayload = {
@@ -275,6 +290,100 @@ export const sendMessage = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Send message error:', error);
     return res.status(500).json({ success: false, message: 'Failed to send message' });
+  }
+};
+
+// Set chat theme for conversation (both participants see it)
+export const setConversationTheme = async (req: Request, res: Response) => {
+  try {
+    const me = (req as any).userId;
+    const conversationId = req.params.conversationId;
+    const themeId = typeof req.body?.themeId === 'string' ? req.body.themeId.trim().toLowerCase() : '';
+    const themeName = typeof req.body?.themeName === 'string' ? req.body.themeName.trim() : themeId;
+
+    if (!me || !conversationId) {
+      return res.status(400).json({ success: false, message: 'Missing conversation' });
+    }
+    if (!themeId || !ALLOWED_CHAT_THEMES.includes(themeId as any)) {
+      return res.status(400).json({ success: false, message: 'Invalid theme' });
+    }
+
+    const conv = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+    });
+    if (!conv || (conv.user1Id !== me && conv.user2Id !== me)) {
+      return res.status(404).json({ success: false, message: 'Conversation not found' });
+    }
+
+    const content = `Theme changed to ${themeName}`;
+    await prisma.conversation.update({
+      where: { id: conversationId },
+      data: {
+        chatTheme: themeId,
+        lastMessageAt: new Date(),
+        lastActivityType: 'theme',
+        lastActivitySummary: content,
+        lastActivityUserId: me,
+        updatedAt: new Date(),
+      },
+    });
+    const systemMessage = await prisma.directMessage.create({
+      data: {
+        conversationId,
+        senderId: me,
+        content,
+        type: 'system',
+      },
+      include: { sender: { select: { id: true, username: true, avatar: true } } },
+    });
+
+    const otherId = conv.user1Id === me ? conv.user2Id : conv.user1Id;
+    await prisma.directMessageVisibility.createMany({
+      data: [
+        { userId: me, messageId: systemMessage.id },
+        { userId: otherId, messageId: systemMessage.id },
+      ],
+    });
+
+    // If the other person had archived the chat, bring it back to their inbox
+    await prisma.conversationState.upsert({
+      where: {
+        userId_conversationId: { userId: otherId, conversationId },
+      },
+      create: { userId: otherId, conversationId },
+      update: { deletedAt: null, clearedAt: null, isArchived: false },
+    });
+
+    const systemMessagePayload = {
+      id: systemMessage.id,
+      senderId: systemMessage.senderId,
+      senderName: systemMessage.sender.username,
+      senderAvatar: systemMessage.sender.avatar,
+      content: systemMessage.content,
+      type: systemMessage.type,
+      reactions: [],
+      createdAt: systemMessage.createdAt,
+    };
+    emitThemeChanged(conversationId, {
+      themeId,
+      themeName,
+      systemMessage: {
+        id: systemMessage.id,
+        content: systemMessage.content,
+        createdAt: systemMessage.createdAt,
+      },
+    });
+    emitNewMessage(conversationId, systemMessagePayload);
+
+    return res.json({
+      success: true,
+      themeId,
+      themeName,
+      systemMessage: systemMessagePayload,
+    });
+  } catch (error) {
+    console.error('Set conversation theme error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to set theme' });
   }
 };
 
@@ -388,6 +497,30 @@ export const reactToMessage = async (req: Request, res: Response) => {
       where: { id: messageId },
       data: { reactions: reactions as any },
       include: { sender: { select: { id: true, username: true, avatar: true } } },
+    });
+
+    const otherId = conv.user1Id === me ? conv.user2Id : conv.user1Id;
+
+    const emojiStr = emoji.trim();
+    const reactionSummary = `Reacted with ${emojiStr}`;
+    await prisma.conversation.update({
+      where: { id: conversationId },
+      data: {
+        lastMessageAt: new Date(),
+        lastActivityType: 'reaction',
+        lastActivitySummary: reactionSummary,
+        lastActivityUserId: me,
+        updatedAt: new Date(),
+      },
+    });
+
+    // If the other person had archived the chat, bring it back to their inbox
+    await prisma.conversationState.upsert({
+      where: {
+        userId_conversationId: { userId: otherId, conversationId },
+      },
+      create: { userId: otherId, conversationId },
+      update: { deletedAt: null, clearedAt: null, isArchived: false },
     });
 
     const messagePayload = {
