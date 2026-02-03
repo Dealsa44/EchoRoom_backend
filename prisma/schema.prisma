@@ -126,6 +126,7 @@ model ConversationState {
   conversationId String
   isArchived     Boolean   @default(false)
   deletedAt      DateTime?
+  clearedAt      DateTime? // when set, only messages after this time are shown to this user (their view is cleared)
 
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)

@@ -100,6 +100,16 @@ export const getOrCreateConversation = async (req: Request, res: Response) => {
       },
     });
 
+    if (conversation) {
+      await prisma.conversationState.upsert({
+        where: {
+          userId_conversationId: { userId: me, conversationId: conversation.id },
+        },
+        create: { userId: me, conversationId: conversation.id },
+        update: { deletedAt: null },
+      });
+    }
+
     if (!conversation) {
       conversation = await prisma.conversation.create({
         data: { user1Id: u1, user2Id: u2 },
@@ -162,8 +172,16 @@ export const getMessages = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: 'Conversation not found' });
     }
 
+    const myState = await prisma.conversationState.findUnique({
+      where: { userId_conversationId: { userId: me, conversationId } },
+    });
+    const clearedAt = myState?.clearedAt ?? null;
+
     const messages = await prisma.directMessage.findMany({
-      where: { conversationId },
+      where: {
+        conversationId,
+        ...(clearedAt ? { createdAt: { gt: clearedAt } } : {}),
+      },
       include: { sender: { select: { id: true, username: true, avatar: true } } },
       orderBy: { createdAt: 'asc' },
       skip: offset,
@@ -287,12 +305,13 @@ export const deleteConversation = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: 'Conversation not found' });
     }
 
+    const now = new Date();
     await prisma.conversationState.upsert({
       where: {
         userId_conversationId: { userId: me, conversationId },
       },
-      create: { userId: me, conversationId, deletedAt: new Date() },
-      update: { deletedAt: new Date() },
+      create: { userId: me, conversationId, deletedAt: now, clearedAt: now },
+      update: { deletedAt: now, clearedAt: now },
     });
 
     return res.json({ success: true });
