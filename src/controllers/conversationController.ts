@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { emitNewMessage, emitMessageReaction } from '../socket';
 
 const prisma = new PrismaClient();
 
@@ -255,18 +256,21 @@ export const sendMessage = async (req: Request, res: Response) => {
       data: { lastMessageAt: new Date(), updatedAt: new Date() },
     });
 
+    const messagePayload = {
+      id: message.id,
+      senderId: message.senderId,
+      senderName: message.sender.username,
+      senderAvatar: message.sender.avatar,
+      content: message.content,
+      type: message.type,
+      reactions: (message.reactions as ReactionItem[] | null) || [],
+      createdAt: message.createdAt,
+    };
+    emitNewMessage(conversationId, messagePayload);
+
     return res.json({
       success: true,
-      message: {
-        id: message.id,
-        senderId: message.senderId,
-        senderName: message.sender.username,
-        senderAvatar: message.sender.avatar,
-        content: message.content,
-        type: message.type,
-        reactions: (message.reactions as ReactionItem[] | null) || [],
-        createdAt: message.createdAt,
-      },
+      message: messagePayload,
     });
   } catch (error) {
     console.error('Send message error:', error);
@@ -386,18 +390,21 @@ export const reactToMessage = async (req: Request, res: Response) => {
       include: { sender: { select: { id: true, username: true, avatar: true } } },
     });
 
+    const messagePayload = {
+      id: updated.id,
+      senderId: updated.senderId,
+      senderName: updated.sender.username,
+      senderAvatar: updated.sender.avatar,
+      content: updated.content,
+      type: updated.type,
+      reactions: (updated.reactions as ReactionItem[]) || [],
+      createdAt: updated.createdAt,
+    };
+    emitMessageReaction(conversationId, { messageId: updated.id, message: messagePayload });
+
     return res.json({
       success: true,
-      message: {
-        id: updated.id,
-        senderId: updated.senderId,
-        senderName: updated.sender.username,
-        senderAvatar: updated.sender.avatar,
-        content: updated.content,
-        type: updated.type,
-        reactions: (updated.reactions as ReactionItem[]) || [],
-        createdAt: updated.createdAt,
-      },
+      message: messagePayload,
     });
   } catch (error) {
     console.error('React to message error:', error);
