@@ -78,8 +78,60 @@ model User {
   eventParticipations EventParticipant[]
   eventReactions EventReaction[]
   eventMessages EventMessage[]
+  conversationsAsUser1 Conversation[] @relation("User1")
+  conversationsAsUser2 Conversation[] @relation("User2")
+  conversationStates ConversationState[]
+  directMessagesSent DirectMessage[]
   
   @@map("users")
+}
+
+// 1:1 private conversations (DMs)
+model Conversation {
+  id             String   @id @default(cuid())
+  user1Id        String
+  user2Id        String
+  lastMessageAt  DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user1          User     @relation("User1", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2          User     @relation("User2", fields: [user2Id], references: [id], onDelete: Cascade)
+  messages       DirectMessage[]
+  states         ConversationState[]
+
+  @@unique([user1Id, user2Id])
+  @@map("conversations")
+}
+
+model DirectMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String
+  type           String   @default("text")
+  reactions      Json?    // [{ "userId": "...", "emoji": "❤️" }]
+  createdAt      DateTime @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("direct_messages")
+}
+
+// Per-user state: archive, soft delete (hide from list)
+model ConversationState {
+  id             String    @id @default(cuid())
+  userId         String
+  conversationId String
+  isArchived     Boolean   @default(false)
+  deletedAt      DateTime?
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, conversationId])
+  @@map("conversation_states")
 }
 
 model Event {
