@@ -3,6 +3,7 @@ import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
 
 const CONVERSATION_ROOM_PREFIX = 'conversation:';
+const USER_ROOM_PREFIX = 'user:';
 
 let io: Server | null = null;
 
@@ -45,6 +46,9 @@ export function initSocket(httpServer: HttpServer): Server {
   io.on('connection', (socket: Socket) => {
     const userId = (socket as any).data.userId;
     if (!userId) return;
+
+    // So we can push conversation updates (new message, reaction, theme) to this user's inbox
+    socket.join(USER_ROOM_PREFIX + userId);
 
     socket.on('join_conversation', (conversationId: string) => {
       if (typeof conversationId === 'string' && conversationId) {
@@ -111,5 +115,12 @@ export function emitThemeChanged(
 ): void {
   if (io) {
     io.to(CONVERSATION_ROOM_PREFIX + conversationId).emit('theme:changed', payload);
+  }
+}
+
+/** Notify a user that a conversation was updated (new message, reaction, theme) so inbox/list can refetch */
+export function emitConversationUpdated(userId: string, conversationId: string): void {
+  if (io) {
+    io.to(USER_ROOM_PREFIX + userId).emit('conversation:updated', { conversationId });
   }
 }

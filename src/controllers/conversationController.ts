@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { emitNewMessage, emitMessageReaction, emitThemeChanged } from '../socket';
+import { emitNewMessage, emitMessageReaction, emitThemeChanged, emitConversationUpdated } from '../socket';
 
 const prisma = new PrismaClient();
 
@@ -282,6 +282,8 @@ export const sendMessage = async (req: Request, res: Response) => {
       createdAt: message.createdAt,
     };
     emitNewMessage(conversationId, messagePayload);
+    emitConversationUpdated(otherId, conversationId);
+    emitConversationUpdated(me, conversationId);
 
     return res.json({
       success: true,
@@ -374,6 +376,8 @@ export const setConversationTheme = async (req: Request, res: Response) => {
       },
     });
     emitNewMessage(conversationId, systemMessagePayload);
+    emitConversationUpdated(otherId, conversationId);
+    emitConversationUpdated(me, conversationId);
 
     return res.json({
       success: true,
@@ -411,6 +415,8 @@ export const setArchived = async (req: Request, res: Response) => {
       create: { userId: me, conversationId, isArchived },
       update: { isArchived },
     });
+
+    emitConversationUpdated(me, conversationId);
 
     return res.json({ success: true });
   } catch (error) {
@@ -534,6 +540,8 @@ export const reactToMessage = async (req: Request, res: Response) => {
       createdAt: updated.createdAt,
     };
     emitMessageReaction(conversationId, { messageId: updated.id, message: messagePayload });
+    emitConversationUpdated(otherId, conversationId);
+    emitConversationUpdated(me, conversationId);
 
     return res.json({
       success: true,
