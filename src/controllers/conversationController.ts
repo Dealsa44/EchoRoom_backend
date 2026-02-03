@@ -241,6 +241,15 @@ export const sendMessage = async (req: Request, res: Response) => {
       ],
     });
 
+    // If the other person had deleted the chat, bring it back in their list (they only see new messages)
+    await prisma.conversationState.upsert({
+      where: {
+        userId_conversationId: { userId: otherId, conversationId },
+      },
+      create: { userId: otherId, conversationId },
+      update: { deletedAt: null, clearedAt: null },
+    });
+
     await prisma.conversation.update({
       where: { id: conversationId },
       data: { lastMessageAt: new Date(), updatedAt: new Date() },
