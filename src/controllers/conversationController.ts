@@ -172,15 +172,15 @@ export const getMessages = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: 'Conversation not found' });
     }
 
-    const myState = await prisma.conversationState.findUnique({
-      where: { userId_conversationId: { userId: me, conversationId } },
+    const visibleMessageIds = await prisma.directMessageVisibility.findMany({
+      where: { userId: me, message: { conversationId } },
+      select: { messageId: true },
     });
-    const clearedAt = myState?.clearedAt ?? null;
-
+    const ids = visibleMessageIds.map((v) => v.messageId);
     const messages = await prisma.directMessage.findMany({
       where: {
         conversationId,
-        ...(clearedAt ? { createdAt: { gt: clearedAt } } : {}),
+        id: { in: ids.length ? ids : ['__none__'] },
       },
       include: { sender: { select: { id: true, username: true, avatar: true } } },
       orderBy: { createdAt: 'asc' },
@@ -231,6 +231,14 @@ export const sendMessage = async (req: Request, res: Response) => {
         type: 'text',
       },
       include: { sender: { select: { id: true, username: true, avatar: true } } },
+    });
+
+    const otherId = conv.user1Id === me ? conv.user2Id : conv.user1Id;
+    await prisma.directMessageVisibility.createMany({
+      data: [
+        { userId: me, messageId: message.id },
+        { userId: otherId, messageId: message.id },
+      ],
     });
 
     await prisma.conversation.update({
@@ -289,7 +297,7 @@ export const setArchived = async (req: Request, res: Response) => {
   }
 };
 
-// Soft delete for current user (hide from list). When BOTH users have deleted, hard-delete messages and conversation from DB.
+// Delete for current user only: hard-delete my visibility rows (messages disappear for me) and hide from my list.
 export const deleteConversation = async (req: Request, res: Response) => {
   try {
     const me = (req as any).userId;
@@ -305,6 +313,17 @@ export const deleteConversation = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: 'Conversation not found' });
     }
 
+    const messageIds = await prisma.directMessage.findMany({
+      where: { conversationId },
+      select: { id: true },
+    });
+    const ids = messageIds.map((m) => m.id);
+    if (ids.length > 0) {
+      await prisma.directMessageVisibility.deleteMany({
+        where: { userId: me, messageId: { in: ids } },
+      });
+    }
+
     const now = new Date();
     await prisma.conversationState.upsert({
       where: {
@@ -313,17 +332,6 @@ export const deleteConversation = async (req: Request, res: Response) => {
       create: { userId: me, conversationId, deletedAt: now, clearedAt: now },
       update: { deletedAt: now, clearedAt: now },
     });
-
-    // If both users have deleted, remove messages and conversation from the database
-    const states = await prisma.conversationState.findMany({
-      where: { conversationId },
-      select: { userId: true, deletedAt: true },
-    });
-    const bothDeleted = states.length === 2 && states.every((s) => s.deletedAt != null);
-    if (bothDeleted) {
-      await prisma.directMessage.deleteMany({ where: { conversationId } });
-      await prisma.conversation.delete({ where: { id: conversationId } });
-    }
 
     return res.json({ success: true });
   } catch (error) {

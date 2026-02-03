@@ -82,7 +82,8 @@ model User {
   conversationsAsUser2 Conversation[] @relation("User2")
   conversationStates ConversationState[]
   directMessagesSent DirectMessage[]
-  
+  directMessageVisibilities DirectMessageVisibility[]
+
   @@map("users")
 }
 
@@ -115,8 +116,22 @@ model DirectMessage {
 
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  visibilities  DirectMessageVisibility[]
 
   @@map("direct_messages")
+}
+
+// Per-user visibility: you see a message only if you have a row here. Delete for me = delete my rows (hard delete).
+model DirectMessageVisibility {
+  id        String   @id @default(cuid())
+  userId    String
+  messageId String
+
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message DirectMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, messageId])
+  @@map("direct_message_visibilities")
 }
 
 // Per-user state: archive, soft delete (hide from list)
