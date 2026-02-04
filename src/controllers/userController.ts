@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 import { isCompatible } from '../utils/attractionPreferences';
-
-const prisma = new PrismaClient();
 
 function ageFromDateOfBirth(dateOfBirth: string | null | undefined): number {
   if (!dateOfBirth) return 0;

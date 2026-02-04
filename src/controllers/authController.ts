@@ -1,11 +1,10 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 import ResendEmailService from '../services/resendEmailService';
 import { generateVerificationCode, validateEmail } from '../utils/validation';
 
-const prisma = new PrismaClient();
 const emailService = new ResendEmailService();
 
 // Types

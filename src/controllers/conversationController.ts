@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 import { emitNewMessage, emitMessageReaction, emitThemeChanged, emitConversationUpdated } from '../socket';
-
-const prisma = new PrismaClient();
 
 const ALLOWED_CHAT_THEMES = ['default', 'aurora', 'ocean', 'sunset', 'forest', 'midnight'] as const;
 

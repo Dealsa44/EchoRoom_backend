@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { prisma } from '../index';
+import { prisma } from '../lib/prisma';
 
 // List events for browse (exclude events user is hosting or joined; filter/search/sort)
 export const listEvents = async (req: Request, res: Response) => {

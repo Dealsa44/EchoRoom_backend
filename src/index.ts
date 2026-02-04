@@ -4,7 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './lib/prisma';
 import { initSocket } from './socket';
 
 // Import routes
@@ -18,8 +18,8 @@ import conversationRoutes from './routes/conversation';
 // Load environment variables
 dotenv.config();
 
-// Initialize Prisma client
-export const prisma = new PrismaClient();
+// Re-export for any code that imports from index
+export { prisma };
 
 // Create Express app
 const app = express();

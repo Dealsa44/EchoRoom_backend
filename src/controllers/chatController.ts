@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 import {
   emitRoomNewMessage,
   emitRoomMessageReaction,
@@ -11,8 +11,6 @@ import {
   emitRoomDeleted,
   emitRoomUpdatedForUser,
 } from '../socket';
-
-const prisma = new PrismaClient();
 
 const ALLOWED_CHAT_THEMES = ['default', 'aurora', 'ocean', 'sunset', 'forest', 'midnight'] as const;
 type ReactionItem = { userId: string; emoji: string };
