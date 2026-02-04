@@ -3,6 +3,7 @@ import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
 
 const CONVERSATION_ROOM_PREFIX = 'conversation:';
+const CHAT_ROOM_PREFIX = 'chat_room:';
 const USER_ROOM_PREFIX = 'user:';
 
 let io: Server | null = null;
@@ -81,6 +82,37 @@ export function initSocket(httpServer: HttpServer): Server {
         });
       }
     });
+
+    // Chat rooms
+    socket.on('join_chat_room', (roomId: string) => {
+      if (typeof roomId === 'string' && roomId) {
+        socket.join(CHAT_ROOM_PREFIX + roomId);
+      }
+    });
+
+    socket.on('leave_chat_room', (roomId: string) => {
+      if (typeof roomId === 'string' && roomId) {
+        socket.leave(CHAT_ROOM_PREFIX + roomId);
+      }
+    });
+
+    socket.on('typing:start_room', (roomId: string) => {
+      if (typeof roomId === 'string' && roomId) {
+        socket.to(CHAT_ROOM_PREFIX + roomId).emit('typing:start_room', {
+          userId,
+          roomId,
+        });
+      }
+    });
+
+    socket.on('typing:stop_room', (roomId: string) => {
+      if (typeof roomId === 'string' && roomId) {
+        socket.to(CHAT_ROOM_PREFIX + roomId).emit('typing:stop_room', {
+          userId,
+          roomId,
+        });
+      }
+    });
   });
 
   console.log('🔌 Socket.IO attached');
@@ -122,5 +154,80 @@ export function emitThemeChanged(
 export function emitConversationUpdated(userId: string, conversationId: string): void {
   if (io) {
     io.to(USER_ROOM_PREFIX + userId).emit('conversation:updated', { conversationId });
+  }
+}
+
+// --- Chat room socket events ---
+export function emitRoomNewMessage(roomId: string, message: object): void {
+  if (io) {
+    io.to(CHAT_ROOM_PREFIX + roomId).emit('message:new_room', message);
+  }
+}
+
+export function emitRoomMessageReaction(
+  roomId: string,
+  payload: { messageId: string; message: object }
+): void {
+  if (io) {
+    io.to(CHAT_ROOM_PREFIX + roomId).emit('message:reaction_room', payload);
+  }
+}
+
+export function emitRoomThemeChanged(
+  roomId: string,
+  payload: { themeId: string; themeName: string; systemMessage: { id: string; content: string; createdAt: Date } }
+): void {
+  if (io) {
+    io.to(CHAT_ROOM_PREFIX + roomId).emit('theme:changed_room', payload);
+  }
+}
+
+export function emitRoomUpdated(
+  roomId: string,
+  payload: { title?: string; description?: string; chatTheme?: string }
+): void {
+  if (io) {
+    io.to(CHAT_ROOM_PREFIX + roomId).emit('room:updated', payload);
+  }
+}
+
+export function emitRoomMemberLeft(
+  roomId: string,
+  payload: { userId: string; userName: string; isKick: boolean }
+): void {
+  if (io) {
+    io.to(CHAT_ROOM_PREFIX + roomId).emit('member:left_room', payload);
+  }
+}
+
+export function emitRoomMemberKicked(roomId: string, payload: { userId: string; userName: string }): void {
+  if (io) {
+    io.to(CHAT_ROOM_PREFIX + roomId).emit('member:kicked_room', payload);
+  }
+}
+
+export function emitRoomAdminChanged(
+  roomId: string,
+  payload: {
+    newCreatorId: string;
+    newCreatorName: string;
+    systemMessage: { id: string; content: string; createdAt: Date };
+  }
+): void {
+  if (io) {
+    io.to(CHAT_ROOM_PREFIX + roomId).emit('admin:changed_room', payload);
+  }
+}
+
+export function emitRoomDeleted(roomId: string): void {
+  if (io) {
+    io.to(CHAT_ROOM_PREFIX + roomId).emit('room:deleted', { roomId });
+  }
+}
+
+/** Notify a user that a chat room was updated (inbox/list refetch) */
+export function emitRoomUpdatedForUser(userId: string, roomId: string): void {
+  if (io) {
+    io.to(USER_ROOM_PREFIX + userId).emit('room:updated', { roomId });
   }
 }

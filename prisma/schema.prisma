@@ -83,6 +83,8 @@ model User {
   conversationStates ConversationState[]
   directMessagesSent DirectMessage[]
   directMessageVisibilities DirectMessageVisibility[]
+  roomMemberStates RoomMemberState[]
+  roomMessageVisibilities RoomMessageVisibility[]
 
   @@map("users")
 }
@@ -302,6 +304,13 @@ model ChatRoom {
   icon        String?
   tags        String[]
   
+  // Theme and last activity (for inbox preview)
+  chatTheme           String?  @default("default")
+  lastMessageAt       DateTime?
+  lastActivityType    String?   // 'message' | 'reaction' | 'theme' | 'member_left' | 'member_kicked' | 'admin_changed'
+  lastActivitySummary String?
+  lastActivityUserId  String?
+  
   // Stats
   memberCount    Int @default(0)
   activeNow      Int @default(0)
@@ -311,10 +320,39 @@ model ChatRoom {
   updatedAt DateTime @updatedAt
   
   // Relations
-  messages ChatMessage[]
-  members  RoomMember[]
+  messages     ChatMessage[]
+  members      RoomMember[]
+  memberStates RoomMemberState[]
   
   @@map("chat_rooms")
+}
+
+// Per-user state: archive, cleared (only show messages after clearedAt)
+model RoomMemberState {
+  id         String    @id @default(cuid())
+  userId     String
+  roomId     String
+  isArchived Boolean   @default(false)
+  clearedAt  DateTime? // only show messages after this time (rejoin = see from now)
+  
+  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, roomId])
+  @@map("room_member_states")
+}
+
+// Per-user message visibility: delete for me = delete row
+model RoomMessageVisibility {
+  id        String @id @default(cuid())
+  userId    String
+  messageId String
+  
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, messageId])
+  @@map("room_message_visibilities")
 }
 
 model ChatMessage {
@@ -322,7 +360,7 @@ model ChatMessage {
   roomId    String
   userId    String
   content   String
-  type      String   @default("text") // text, image, voice, file
+  type      String   @default("text") // text, image, voice, file, system
   imageUrl  String?
   fileData  Json?
   voiceData Json?
@@ -347,8 +385,9 @@ model ChatMessage {
   updatedAt DateTime @updatedAt
   
   // Relations
-  room ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room         ChatRoom               @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  visibilities RoomMessageVisibility[]
   
   @@map("chat_messages")
 }
@@ -359,6 +398,7 @@ model RoomMember {
   userId    String
   joinedAt  DateTime @default(now())
   isActive  Boolean  @default(true)
+  isCreator Boolean  @default(false)
   
   // Relations
   room ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
