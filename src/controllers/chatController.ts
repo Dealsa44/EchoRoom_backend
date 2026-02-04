@@ -42,6 +42,9 @@ async function updateRoomLastActivity(
 export const createRoom = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
     const { title, category, description, icon, tags } = req.body;
 
     if (!title || typeof title !== 'string' || !title.trim()) {
@@ -51,32 +54,36 @@ export const createRoom = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: 'Category is required' });
     }
 
-    const room = await prisma.chatRoom.create({
-      data: {
-        title: title.trim(),
-        category: category.trim(),
-        description: typeof description === 'string' ? description.trim() : '',
-        icon: typeof icon === 'string' ? icon : null,
-        tags: Array.isArray(tags) ? tags.filter((t: any) => typeof t === 'string').slice(0, 10) : [],
-        memberCount: 1,
-        chatTheme: 'default',
-      },
-    });
+    const room = await prisma.$transaction(async (tx) => {
+      const created = await tx.chatRoom.create({
+        data: {
+          title: title.trim(),
+          category: category.trim(),
+          description: typeof description === 'string' ? description.trim() : '',
+          icon: typeof icon === 'string' ? icon : null,
+          tags: Array.isArray(tags) ? tags.filter((t: any) => typeof t === 'string').slice(0, 10) : [],
+          memberCount: 1,
+          chatTheme: 'default',
+        },
+      });
 
-    await prisma.roomMember.create({
-      data: {
-        roomId: room.id,
-        userId,
-        isCreator: true,
-      },
-    });
+      await tx.roomMember.create({
+        data: {
+          roomId: created.id,
+          userId,
+          isCreator: true,
+        },
+      });
 
-    await prisma.roomMemberState.create({
-      data: {
-        userId,
-        roomId: room.id,
-        clearedAt: new Date(), // only see messages from now
-      },
+      await tx.roomMemberState.create({
+        data: {
+          userId,
+          roomId: created.id,
+          clearedAt: new Date(),
+        },
+      });
+
+      return created;
     });
 
     const roomWithCreator = await prisma.chatRoom.findUnique({
@@ -91,25 +98,29 @@ export const createRoom = async (req: Request, res: Response) => {
       },
     });
 
+    if (!roomWithCreator) {
+      return res.status(500).json({ success: false, message: 'Room created but could not load details' });
+    }
+
     const formatted = {
-      id: roomWithCreator!.id,
-      title: roomWithCreator!.title,
-      category: roomWithCreator!.category,
-      description: roomWithCreator!.description,
-      icon: roomWithCreator!.icon,
-      tags: roomWithCreator!.tags,
-      memberCount: roomWithCreator!._count.members,
-      messageCount: roomWithCreator!._count.messages,
-      activeNow: roomWithCreator!.activeNow,
-      chatTheme: roomWithCreator!.chatTheme,
-      lastMessageAt: roomWithCreator!.lastMessageAt,
-      lastActivityType: roomWithCreator!.lastActivityType,
-      lastActivitySummary: roomWithCreator!.lastActivitySummary,
-      lastActivityUserId: roomWithCreator!.lastActivityUserId,
-      createdAt: roomWithCreator!.createdAt,
+      id: roomWithCreator.id,
+      title: roomWithCreator.title,
+      category: roomWithCreator.category,
+      description: roomWithCreator.description,
+      icon: roomWithCreator.icon,
+      tags: roomWithCreator.tags,
+      memberCount: roomWithCreator._count.members,
+      messageCount: roomWithCreator._count.messages,
+      activeNow: roomWithCreator.activeNow,
+      chatTheme: roomWithCreator.chatTheme,
+      lastMessageAt: roomWithCreator.lastMessageAt,
+      lastActivityType: roomWithCreator.lastActivityType,
+      lastActivitySummary: roomWithCreator.lastActivitySummary,
+      lastActivityUserId: roomWithCreator.lastActivityUserId,
+      createdAt: roomWithCreator.createdAt,
       isJoined: true,
       isCreator: true,
-      membersList: roomWithCreator!.members.map((m: any) => ({
+      membersList: roomWithCreator.members.map((m: any) => ({
         id: m.user.id,
         username: m.user.username,
         avatar: m.user.avatar,
@@ -120,9 +131,12 @@ export const createRoom = async (req: Request, res: Response) => {
     };
 
     return res.status(201).json({ success: true, room: formatted });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Create room error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to create room' });
+    const message = process.env.NODE_ENV !== 'production' && error?.message
+      ? String(error.message)
+      : 'Failed to create room';
+    return res.status(500).json({ success: false, message });
   }
 };
 
